@@ -1,4 +1,4 @@
-#define BUZZPIN 0
+#define BUZZPIN 2
 
 void setup() {
   // put your setup code here, to run once:

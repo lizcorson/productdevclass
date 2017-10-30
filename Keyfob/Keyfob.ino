@@ -1,12 +1,12 @@
-/*#include <IRLib2.h>
-#include <IRLibAll.h>
-#include <IRLibDecodeBase.h>
-#include <IRLibGlobals.h>
-#include <IRLibRecvBase.h>
-#include <IRLibRecvLoop.h>*/
+/* Product Demo for ENME615.
+ *  Model for alert effects for child in car seat reminder keyfob.
+ *  Trigger LEDs, tones, and vibration with IR remote.
+ *  Liz Corson, October 2017
+ *  
+ */
 
 #include "IRLibAll.h"
-//#include "IRLibSAMD21.h"
+
 
 //Create a receiver object to listen on pin 2
 IRrecvPCI myReceiver(1);
@@ -16,7 +16,7 @@ IRdecode myDecoder;
 
 //Buzzer
 #define SPEAKERPIN 4
-#define BUZZPIN 0
+#define BUZZPIN 2
 #define LEDPIN 3
  
 //int numTones = 10;
@@ -26,6 +26,13 @@ IRdecode myDecoder;
 int numTones = 2;
 int numLoops = 5;
 int tones[] = {100, 500};
+const int blinkDelay = 150;
+const int toneDelay = 500;
+long lastBlink = 0;
+long lastTone = 0;
+bool lastLEDState = LOW;
+int toneCount = 0;
+long effectLength = 5000;
 
 void setup() {
   Serial.begin(9600);
@@ -54,6 +61,7 @@ void loop() {
           sounds();
           break;
         case 0xFD28D7:  //4
+          ledandsounds();
           Serial.println("4");
           break;
         case 0xFDA857:  //5
@@ -78,25 +86,30 @@ void loop() {
 }
 
 void blinky() {
-  for (int i=0; i<20; i++) {
-    digitalWrite(LEDPIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-    delay(150);                       // wait for a second
-    digitalWrite(LEDPIN, LOW);    // turn the LED off by making the voltage LOW
-    delay(150);                       // wait for a second
+  long startEffect = millis();  
+  while ((unsigned long)(millis() - startEffect) < effectLength) {
+    if ((unsigned long)(millis() - lastBlink) > blinkDelay) {
+      digitalWrite(LEDPIN, !lastLEDState);
+      lastLEDState = !lastLEDState;
+      lastBlink = millis();
+    }
   }
-  
+  digitalWrite(LEDPIN, LOW);  
 }
 
 void sounds() {
-  for (int j=0; j < numLoops; j++) {
-    for (int i = 0; i < numTones; i++) {
-      tone(SPEAKERPIN, tones[i]);
-      delay(500);
+  long startEffect = millis();  
+  while ((unsigned long)(millis() - startEffect) < effectLength) {
+    if ((unsigned long)(millis() - lastTone) > toneDelay) {
+      tone(SPEAKERPIN, tones[toneCount % numTones]);
+      toneCount++;
+      lastTone = millis();
     }
-    noTone(SPEAKERPIN);
   }
+  noTone(SPEAKERPIN);
 }
 
+// Note - circuit for vibration motor not working :(
 void buzz() {
   digitalWrite(BUZZPIN, HIGH); 
   delay(5000);
@@ -109,5 +122,25 @@ void buzz() {
     digitalWrite(LED_BUILTIN, LOW);
     delay(150);                       // wait for a second
   }  */
+}
+
+void ledandsounds() {
+  long startEffect = millis();
+  
+  while ((unsigned long)(millis() - startEffect) < effectLength) {
+    if ((unsigned long)(millis() - lastBlink) > blinkDelay) {
+      digitalWrite(LEDPIN, !lastLEDState);
+      lastLEDState = !lastLEDState;
+      lastBlink = millis();
+    }
+  
+    if ((unsigned long)(millis() - lastTone) > toneDelay) {
+      tone(SPEAKERPIN, tones[toneCount % numTones]);
+      toneCount++;
+      lastTone = millis();
+    }
+  }
+  digitalWrite(LEDPIN, LOW);
+  noTone(SPEAKERPIN);
 }
 

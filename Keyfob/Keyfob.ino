@@ -18,27 +18,34 @@ IRdecode myDecoder;
 #define SPEAKERPIN 4
 #define BUZZPIN 2
 #define LEDPIN 3
- 
-//int numTones = 10;
-//int tones[] = {261, 277, 294, 311, 330, 349, 370, 392, 415, 440};
-//            mid C  C#   D    D#   E    F    F#   G    G#   A
 
+long effectLength = 5000;
+
+//buzz
+const int buzzDelay = 200;
+bool lastBuzzState = LOW;
+long lastBuzz = 0;
+//led
+const int blinkDelay = 150;
+bool lastLEDState = LOW;
+long lastBlink = 0;
+//piezo
+const int toneDelay = 500;
+long lastTone = 0;
+int toneCount = 0;
 int numTones = 2;
 int numLoops = 5;
 int tones[] = {100, 500};
-const int blinkDelay = 150;
-const int toneDelay = 500;
-long lastBlink = 0;
-long lastTone = 0;
-bool lastLEDState = LOW;
-int toneCount = 0;
-long effectLength = 5000;
+
+
 
 void setup() {
   Serial.begin(9600);
   delay(2000); //while (!Serial); //delay for Leonardo
   myReceiver.enableIRIn(); // Start the receiver
   Serial.println(F("Ready to receive IR signals"));
+  pinMode(BUZZPIN, OUTPUT);
+  pinMode(LEDPIN, OUTPUT);
 }
 
 void loop() {
@@ -112,17 +119,15 @@ void sounds() {
 
 // Note - circuit for vibration motor not working :(
 void buzz() {
-  digitalWrite(BUZZPIN, HIGH); 
-  delay(5000);
-  digitalWrite(BUZZPIN, LOW); 
-  /*for (int i=0; i<20; i++) {
-    digitalWrite(BUZZPIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-    digitalWrite(LED_BUILTIN, HIGH); 
-    delay(150);                       // wait for a second
-    digitalWrite(BUZZPIN, LOW);    // turn the LED off by making the voltage LOW
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(150);                       // wait for a second
-  }  */
+  long startEffect = millis(); 
+  while ((unsigned long)(millis() - startEffect) < effectLength) {
+    if ((unsigned long)(millis() - lastBuzz) > buzzDelay) {
+      digitalWrite(BUZZPIN, !lastBuzzState);
+      lastBuzzState = !lastBuzzState;
+      lastBuzz = millis();
+    }
+  }
+  digitalWrite(BUZZPIN, LOW);
 }
 
 void ledandsounds() {
@@ -148,7 +153,6 @@ void ledandsounds() {
 
 void all3() {
   long startEffect = millis();
-  digitalWrite(BUZZPIN, HIGH); 
   while ((unsigned long)(millis() - startEffect) < effectLength) {
     if ((unsigned long)(millis() - lastBlink) > blinkDelay) {
       digitalWrite(LEDPIN, !lastLEDState);
@@ -160,6 +164,12 @@ void all3() {
       tone(SPEAKERPIN, tones[toneCount % numTones]);
       toneCount++;
       lastTone = millis();
+    }
+
+    if ((unsigned long)(millis() - lastBuzz) > buzzDelay) {
+      digitalWrite(BUZZPIN, !lastBuzzState);
+      lastBuzzState = !lastBuzzState;
+      lastBuzz = millis();
     }
   }
   digitalWrite(LEDPIN, LOW);

@@ -36,7 +36,7 @@ long effectLength = 5000;
 
 void setup() {
   Serial.begin(9600);
-  delay(2000); while (!Serial); //delay for Leonardo
+  delay(2000); //while (!Serial); //delay for Leonardo
   myReceiver.enableIRIn(); // Start the receiver
   Serial.println(F("Ready to receive IR signals"));
 }
@@ -65,6 +65,7 @@ void loop() {
           Serial.println("4");
           break;
         case 0xFDA857:  //5
+          all3();
           Serial.println("5");
           break;
         case 0xFD6897:  //6
@@ -142,5 +143,27 @@ void ledandsounds() {
   }
   digitalWrite(LEDPIN, LOW);
   noTone(SPEAKERPIN);
+}
+
+
+void all3() {
+  long startEffect = millis();
+  digitalWrite(BUZZPIN, HIGH); 
+  while ((unsigned long)(millis() - startEffect) < effectLength) {
+    if ((unsigned long)(millis() - lastBlink) > blinkDelay) {
+      digitalWrite(LEDPIN, !lastLEDState);
+      lastLEDState = !lastLEDState;
+      lastBlink = millis();
+    }
+  
+    if ((unsigned long)(millis() - lastTone) > toneDelay) {
+      tone(SPEAKERPIN, tones[toneCount % numTones]);
+      toneCount++;
+      lastTone = millis();
+    }
+  }
+  digitalWrite(LEDPIN, LOW);
+  noTone(SPEAKERPIN);
+  digitalWrite(BUZZPIN, LOW);
 }
 
